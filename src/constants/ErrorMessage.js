@@ -7,5 +7,5 @@ export const ERROR_MESSAGE = Object.freeze({
   INVALID_DELIMETER: `유효하지 않은 구분자입니다. 상품은 콤마(,) 로 구분해주세요.`,
   NOT_A_NUMBER: `수량은 숫자로 입력해주셔야 합니다.`,
   INVALID_YESNO: `Y 또는 N 으로 답해주셔야 합니다.`,
-  NO_PURCHASE_COUNT: `구매하고자 하는 물품의 수량을 1 이상의 자연수로 입력해주세요.`,
+  INVALID_PURCHASE_COUNT: `구매하고자 하는 물품의 수량을 1 이상의 자연수로 입력해주세요.`,
 });
