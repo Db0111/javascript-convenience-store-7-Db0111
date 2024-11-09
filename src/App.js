@@ -30,23 +30,15 @@ class App {
       membershipModel,
       receipt,
     );
+    controller.loadProductData(parseCSV(productsData));
+    controller.loadPromotionData(parseCSV(promotionData));
+
     while (continueShopping) {
       OutputView.displayMessage(IOMessage.welcomeMessage);
-      OutputView.displayMessage(formatProductList(parseCSV(productsData)));
-
+      OutputView.displayMessage(formatProductList(productModel.getStock()));
       const userInput = await InputView.getUserInput(IOMessage.purchaseMessage);
 
-      controller.loadProductData(parseCSV(productsData));
-      controller.loadPromotionData(parseCSV(promotionData));
-
       await controller.handlePurchaseInput(userInput);
-
-      const membershipAnswer = await InputView.getUserInput(IOMessage.membershipMessage);
-      const validatedMembershipAnswer = InputValidator.validateYesNo(membershipAnswer);
-
-      if (validatedMembershipAnswer === 'Y') {
-        controller.applyMembershipDiscount();
-      }
 
       await OutputView.displayMessage(receipt.generateReceiptMessage());
 
