@@ -28,14 +28,32 @@ class Receipt {
   }
 
   addPromotionItem(name, quantity) {
-    this.promotionItems.push({ name, quantity });
+    const productData = this.productModel.getStock()[name];
+    let product;
+
+    if (Array.isArray(productData)) {
+      product = productData[0];
+    } else {
+      product = productData;
+    }
+    const price = product.price;
+
+    this.promotionItems.push({
+      name,
+      quantity: Number(quantity),
+      price,
+    });
   }
 
-  setPromotionDiscount(amount) {
-    this.promotionDiscount = amount;
+  setPromotionDiscount() {
+    let totalDiscount = 0;
+    this.promotionItems.forEach(item => {
+      totalDiscount += item.quantity * item.price;
+    });
+    this.promotionDiscount = totalDiscount;
   }
 
-  static setMembershipDiscount(amount) {
+  setMembershipDiscount(amount) {
     this.membershipDiscount = amount;
   }
 
@@ -50,31 +68,31 @@ class Receipt {
 
   generateReceiptMessage() {
     let message = '==============W 편의점================\n';
-    message += '상품\t\t수량\t\t금액\n';
+    message += '상품명\t\t수량\t\t금액\n';
 
     this.items.forEach(item => {
-      message += `${item.name}\t\t${item.quantity}\t\t${item.subtotal.toLocaleString()}원\n`;
+      message += `${item.name}\t\t${item.quantity}\t\t${item.subtotal.toLocaleString()}\n`;
     });
 
     if (this.promotionItems.length > 0) {
-      message += '=============증정===============\n';
+      message += '=============증      정===============\n';
       this.promotionItems.forEach(item => {
         message += `${item.name}\t\t${item.quantity}\n`;
       });
     }
 
     message += '======================================\n';
-    message += `총구매액\t\t${this.items.reduce((sum, item) => sum + item.quantity, 0)}\t\t${this.getTotalAmount().toLocaleString()}원\n`;
+    message += `총구매액\t${this.items.reduce((sum, item) => sum + item.quantity, 0)}\t\t${this.getTotalAmount().toLocaleString()}\n`;
 
     if (this.promotionDiscount > 0) {
-      message += `행사할인\t\t\t-${this.promotionDiscount.toLocaleString()}원\n`;
+      message += `행사할인\t\t\t-${this.promotionDiscount.toLocaleString()}\n`;
     }
 
     if (this.membershipDiscount > 0) {
-      message += `멤버십할인\t\t\t-${this.membershipDiscount.toLocaleString()}원\n`;
+      message += `멤버십할인\t\t\t-${this.membershipDiscount.toLocaleString()}\n`;
     }
 
-    message += `내실돈\t\t${this.getFinalAmount().toLocaleString()}원\n`;
+    message += `내실돈\t\t\t\t${this.getFinalAmount().toLocaleString()}\n`;
 
     return message;
   }
