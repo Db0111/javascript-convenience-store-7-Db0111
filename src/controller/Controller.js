@@ -62,29 +62,37 @@ export class Controller {
         this.receipt.addItem(productName, quantity);
         this.purchasedListModel.addProduct(productName, quantity, price);
         this.productModel.checkStock(productName, quantity);
-        if (this.productModel.checkPromotion(productName)) {
+        const existPromotion = this.productModel.checkPromotion(productName);
+        let freeQuantity = 0;
+
+        if (existPromotion && this.promotionModel.isPromotionValid(existPromotion)) {
           const promotionResult = await this.productModel.applyPromotion(productName, quantity);
           if (promotionResult && promotionResult.freeQuantity > 0) {
             this.receipt.addPromotionItem(productName, promotionResult.freeQuantity);
+            this.receipt.setPromotionDiscount(promotionResult.freeQuantity);
+            freeQuantity = promotionResult.freeQuantity;
           }
+        }
+        await this.productModel.updateStock(productName, quantity, freeQuantity);
+        const membershipAnswer = await InputView.getUserInput(IOMessage.membershipMessage);
+        const validatedMembershipAnswer = InputValidator.validateYesNo(membershipAnswer);
+
+        if (validatedMembershipAnswer === 'Y') {
+          const totalAmount = this.purchasedListModel.getTotalAmount();
+          const promotionDiscountAmount = this.purchasedListModel.getPromotionDiscountAmount();
+
+          const membershipDiscount = this.membershipModel.calculateDiscount(
+            totalAmount,
+            promotionDiscountAmount,
+          );
+
+          this.purchasedListModel.applyMembershipDiscount(membershipDiscount);
+          this.receipt.setMembershipDiscount(membershipDiscount);
         }
       }
     } catch (error) {
       OutputView.throwError(error.message);
-      return this.handlePurchaseInput(await InputView.getUserInput(IOMessage.purchaseMessage));
+      return;
     }
-  }
-
-  applyMembershipDiscount() {
-    const totalAmount = this.purchasedListModel.getTotalAmount();
-    const promotionDiscountAmount = this.purchasedListModel.getPromotionDiscountAmount();
-
-    const membershipDiscount = this.membershipModel.calculateDiscount(
-      totalAmount,
-      promotionDiscountAmount,
-    );
-
-    this.purchasedListModel.applyMembershipDiscount(membershipDiscount);
-    Receipt.setMembershipDiscount(membershipDiscount);
   }
 }
