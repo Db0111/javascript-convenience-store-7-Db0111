@@ -5,7 +5,6 @@ import { OutputView } from '../view/OutputView.js';
 import { ERROR_MESSAGE } from '../constants/ErrorMessage.js';
 import { InputView } from '../view/InputView.js';
 import { IOMessage } from '../constants/IOMessage.js';
-import Receipt from '../model/Receipt.js';
 
 export class Controller {
   productModel;
@@ -53,13 +52,13 @@ export class Controller {
       this.validate(input);
       const parsedInput = mapArrtoObject(splitArrays(input));
       this.validateParsedInput(parsedInput);
+      console.log(parsedInput);
 
       for (const [productName, quantity] of Object.entries(parsedInput)) {
         const productData = this.productModel.getStock()[productName];
         const product = Array.isArray(productData) ? productData[0] : productData;
         const price = product.price;
 
-        this.receipt.addItem(productName, quantity);
         this.purchasedListModel.addProduct(productName, quantity, price);
         this.productModel.checkStock(productName, quantity);
         const existPromotion = this.productModel.checkPromotion(productName);
@@ -73,22 +72,23 @@ export class Controller {
             freeQuantity = promotionResult.freeQuantity;
           }
         }
+        this.receipt.addItem(productName, quantity, freeQuantity);
         await this.productModel.updateStock(productName, quantity, freeQuantity);
-        const membershipAnswer = await InputView.getUserInput(IOMessage.membershipMessage);
-        const validatedMembershipAnswer = InputValidator.validateYesNo(membershipAnswer);
+      }
+      const membershipAnswer = await InputView.getUserInput(IOMessage.membershipMessage);
+      const validatedMembershipAnswer = InputValidator.validateYesNo(membershipAnswer);
 
-        if (validatedMembershipAnswer === 'Y') {
-          const totalAmount = this.purchasedListModel.getTotalAmount();
-          const promotionDiscountAmount = this.purchasedListModel.getPromotionDiscountAmount();
+      if (validatedMembershipAnswer === 'Y') {
+        const totalAmount = this.purchasedListModel.getTotalAmount();
+        const promotionDiscountAmount = this.purchasedListModel.getPromotionDiscountAmount();
 
-          const membershipDiscount = this.membershipModel.calculateDiscount(
-            totalAmount,
-            promotionDiscountAmount,
-          );
+        const membershipDiscount = this.membershipModel.calculateDiscount(
+          totalAmount,
+          promotionDiscountAmount,
+        );
 
-          this.purchasedListModel.applyMembershipDiscount(membershipDiscount);
-          this.receipt.setMembershipDiscount(membershipDiscount);
-        }
+        this.purchasedListModel.applyMembershipDiscount(membershipDiscount);
+        this.receipt.setMembershipDiscount(membershipDiscount);
       }
     } catch (error) {
       OutputView.throwError(error.message);
