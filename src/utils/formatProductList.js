@@ -5,14 +5,23 @@ function formatProductList(stockData) {
         .map(product => {
           const { price, quantity, promotion } = product;
 
-          let promotionDescription;
-          if (promotion.type !== 'null') {
-            promotionDescription = promotion.type;
+          let displayQuantity;
+          if (quantity === 0) {
+            displayQuantity = '재고 없음';
           } else {
-            promotionDescription = '';
+            displayQuantity = `${quantity}개`;
           }
 
-          return `- ${productName} ${price.toLocaleString()}원 ${quantity}개 ${promotionDescription}`;
+          let promotionDescription = '';
+          if (promotion && promotion.type && promotion.type !== 'null') {
+            promotionDescription = promotion.type;
+          }
+
+          let result = `- ${productName} ${price.toLocaleString()}원 ${displayQuantity}`;
+          if (promotionDescription !== '') {
+            result += ` ${promotionDescription}`;
+          }
+          return result;
         })
         .join('\n');
     })
