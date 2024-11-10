@@ -22,9 +22,7 @@ describe('입력값 유효성 검사 테스트', () => {
       const isValid = Regex.test(input);
       expect(isValid).toBe(true);
     } else {
-      await expect(() => controller.validate(input)).toThrowError(
-        new Error(`[ERROR] ${expectedError}`),
-      );
+      await expect(() => controller.validate(input)).toThrowError(new Error(`${expectedError}`));
     }
   });
 });
