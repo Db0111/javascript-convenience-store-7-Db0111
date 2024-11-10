@@ -45,13 +45,13 @@ class Products {
 
   checkStock(productName, quantity) {
     if (!this.stock[productName]) {
-      OutputView.throwError(ERROR_MESSAGE.PRODUCT_NOT_FOUND);
+      return false;
     }
-
     const totalStock = this.stock[productName].reduce((sum, product) => sum + product.quantity, 0);
     if (totalStock < quantity) {
-      OutputView.throwError(ERROR_MESSAGE.EXCEEDS_STOCK);
+      return false;
     }
+    return true;
   }
 
   checkPromotion(productName) {
@@ -63,6 +63,7 @@ class Products {
     }
     return false;
   }
+
   async applyPromotion(productName, quantity) {
     try {
       const products = this.stock[productName];
@@ -83,7 +84,7 @@ class Products {
 
       const totalNeededForSet = buyQuantity + freeQuantity;
 
-      if (quantity < totalNeededForSet) {
+      if (quantity < totalNeededForSet && quantity === buyQuantity) {
         const additionalNeeded = totalNeededForSet - quantity;
         const shouldAddMore = await InputView.getUserInput(
           IOMessage.promotionApplyMessage(productName, additionalNeeded),
