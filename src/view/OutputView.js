@@ -6,6 +6,6 @@ export class OutputView {
   }
 
   static throwError(errormessage) {
-    throw new Error(`[ERROR] ${errormessage}`);
+    throw new Error(`${errormessage}`);
   }
 }
