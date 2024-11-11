@@ -22,9 +22,7 @@ class Products {
   loadCSVData(csvData) {
     csvData.forEach(({ price, quantity, promotion, name }) => {
       const productData = { price: +price, quantity: +quantity };
-      if (promotion) {
-        productData.promotion = { type: promotion, promotionQuantity: +quantity };
-      }
+      if (promotion) productData.promotion = { type: promotion, promotionQuantity: +quantity };
       if (this.stock[name]) {
         this.stock[name].push(productData);
       } else {
@@ -64,69 +62,87 @@ class Products {
 
   async applyPromotion(productName, quantity) {
     try {
-      const products = this.stock[productName];
-      if (!products || !products[0].promotion)
-        return {
-          regularQuantity: quantity,
-          freeQuantity: 0,
-          message: '프로모션 적용 대상이 아닙니다.',
-        };
-
-      const promotionData = products[0].promotion;
-      const promotionInfo = this.promotion.getPromotionInfo(promotionData.type);
-      const buyQuantity = Number(promotionInfo.buy);
-      const freeQuantity = Number(promotionInfo.get);
-      const totalNeededForSet = buyQuantity + freeQuantity;
-
-      if (quantity < totalNeededForSet && quantity === buyQuantity) {
-        const additionalNeeded = totalNeededForSet - quantity;
-        const shouldAddMore = await InputView.getUserInput(
-          IOMessage.promotionApplyMessage(productName, additionalNeeded),
-        );
-        if (InputValidator.validateYesNo(shouldAddMore) === 'Y')
-          return this.applyPromotion(productName, totalNeededForSet);
-        return { regularQuantity: quantity, freeQuantity: 0 };
-      }
-
-      const possibleSets = Math.floor(quantity / buyQuantity);
-      const remainingQuantity = quantity % buyQuantity;
-      const promotionStock = promotionData.promotionQuantity;
-      const availableSets = Math.min(possibleSets, Math.floor(promotionStock / freeQuantity));
-      if (quantity > promotionStock) {
-        // 일반 가격으로 계산되는 수량 (프로모션 재고를 제외한 나머지 수량)
-        const regularPriceQuantity = quantity - promotionStock;
-
-        const shouldPayFull = await InputView.getUserInput(
-          IOMessage.promotionLackMessage(productName, regularPriceQuantity),
-        );
-
-        if (InputValidator.validateYesNo(shouldPayFull) === 'Y') {
-          return {
-            regularQuantity:
-              regularPriceQuantity +
-              Math.min(possibleSets, Math.floor(promotionStock / freeQuantity)) * buyQuantity +
-              remainingQuantity,
-            freeQuantity:
-              Math.min(possibleSets, Math.floor(promotionStock / freeQuantity)) * freeQuantity,
-          };
-        }
-
-        // 프로모션 재고만 적용
-        return {
-          regularQuantity: promotionStock + remainingQuantity,
-          freeQuantity:
-            Math.min(possibleSets, Math.floor(promotionStock / freeQuantity)) * freeQuantity,
-        };
-      }
-
-      return {
-        regularQuantity: possibleSets * buyQuantity + remainingQuantity,
-        freeQuantity: possibleSets * freeQuantity,
-      };
+      const product = this.stock[productName]?.[0];
+      if (!product || !product.promotion) return this.noPromotionResponse(quantity);
+      const { buy, get } = this.promotion.getPromotionInfo(product.promotion.type);
+      if (quantity < Number(buy) + Number(get) && quantity === Number(buy))
+        return await this.checkAdditionalQuantity(productName, quantity, Number(buy) + Number(get));
+      return await this.calculatePromotionQuantity(productName, quantity, Number(buy), Number(get), product.promotion.promotionQuantity);
     } catch (error) {
       OutputView.throwError(error.message);
       return null;
     }
+  }
+
+  noPromotionResponse(quantity) {
+    return {
+      regularQuantity: quantity,
+      freeQuantity: 0,
+      message: '프로모션 적용 대상이 아닙니다.',
+    };
+  }
+
+  async checkAdditionalQuantity(productName, quantity, totalNeededForSet) {
+    const additionalNeeded = totalNeededForSet - quantity;
+    const shouldAddMore = await InputView.getUserInput(IOMessage.promotionApplyMessage(productName, additionalNeeded));
+    if (InputValidator.validateYesNo(shouldAddMore) === 'Y') {
+      return this.applyPromotion(productName, totalNeededForSet);
+    }
+    return { regularQuantity: quantity, freeQuantity: 0 };
+  }
+
+  // async calculatePromotionQuantity(productName, quantity, buyQuantity, freeQuantity, promotionStock) {
+  //   if (quantity > promotionStock) {
+  //     return await this.handleInsufficientPromotionStock(productName, quantity, promotionStock, buyQuantity, freeQuantity);
+  //   }
+  //   const possibleSets = Math.floor(quantity / buyQuantity);
+  //   return {
+  //     regularQuantity: quantity, // 사용자가 입력한 수량
+  //     freeQuantity: possibleSets * freeQuantity, // 무료 수량
+  //   };
+  // }
+  async calculatePromotionQuantity(productName, quantity, buyQuantity, freeQuantity, promotionStock) {
+    if (quantity > promotionStock) {
+      return await this.handleInsufficientPromotionStock(productName, quantity, promotionStock, buyQuantity, freeQuantity);
+    }
+
+    const possibleSets = Math.floor(quantity / buyQuantity);
+    const totalFreeQuantity = possibleSets * freeQuantity;
+    if (quantity >= buyQuantity) {
+      return {
+        regularQuantity: quantity, // 사용자가 입력한 수량
+        freeQuantity: totalFreeQuantity, // 무료 수량
+      };
+    }
+    return {
+      regularQuantity: quantity, // 사용자가 입력한 수량
+      freeQuantity: 0, // 무료 수량 없음
+    };
+  }
+
+  async handleInsufficientPromotionStock(productName, quantity, promotionStock, buyQuantity, freeQuantity) {
+    const regularPriceQuantity = quantity - promotionStock;
+    const shouldPayFull = await InputView.getUserInput(IOMessage.promotionLackMessage(productName, regularPriceQuantity));
+    if (InputValidator.validateYesNo(shouldPayFull) === 'Y') {
+      return this.fullPaymentResponse(quantity, promotionStock, buyQuantity, freeQuantity);
+    }
+    return this.promotionOnlyResponse(promotionStock, buyQuantity, freeQuantity);
+  }
+
+  fullPaymentResponse(quantity, promotionStock, buyQuantity, freeQuantity) {
+    const possibleSets = Math.floor(quantity / buyQuantity);
+    return {
+      regularQuantity: quantity,
+      freeQuantity: Math.min(possibleSets, Math.floor(promotionStock / freeQuantity)) * freeQuantity,
+    };
+  }
+
+  promotionOnlyResponse(promotionStock, buyQuantity, freeQuantity) {
+    const possibleSets = Math.floor(promotionStock / buyQuantity);
+    return {
+      regularQuantity: promotionStock,
+      freeQuantity: possibleSets * freeQuantity,
+    };
   }
 
   getStock() {
