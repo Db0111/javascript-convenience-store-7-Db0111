@@ -13,7 +13,7 @@ class Products {
     const products = this.stock[productName];
     if (products) {
       products.forEach((product, index) => {
-        product.quantity = Number(product.quantity); // 강제 변환
+        product.quantity = Number(product.quantity);
         product.quantity -= quantity + freeQuantity;
       });
     }
@@ -90,33 +90,21 @@ class Products {
     }
     return { regularQuantity: quantity, freeQuantity: 0 };
   }
-
-  // async calculatePromotionQuantity(productName, quantity, buyQuantity, freeQuantity, promotionStock) {
-  //   if (quantity > promotionStock) {
-  //     return await this.handleInsufficientPromotionStock(productName, quantity, promotionStock, buyQuantity, freeQuantity);
-  //   }
-  //   const possibleSets = Math.floor(quantity / buyQuantity);
-  //   return {
-  //     regularQuantity: quantity, // 사용자가 입력한 수량
-  //     freeQuantity: possibleSets * freeQuantity, // 무료 수량
-  //   };
-  // }
   async calculatePromotionQuantity(productName, quantity, buyQuantity, freeQuantity, promotionStock) {
     if (quantity > promotionStock) {
       return await this.handleInsufficientPromotionStock(productName, quantity, promotionStock, buyQuantity, freeQuantity);
     }
-
     const possibleSets = Math.floor(quantity / buyQuantity);
     const totalFreeQuantity = possibleSets * freeQuantity;
     if (quantity >= buyQuantity) {
       return {
-        regularQuantity: quantity, // 사용자가 입력한 수량
-        freeQuantity: totalFreeQuantity, // 무료 수량
+        regularQuantity: quantity,
+        freeQuantity: totalFreeQuantity,
       };
     }
     return {
-      regularQuantity: quantity, // 사용자가 입력한 수량
-      freeQuantity: 0, // 무료 수량 없음
+      regularQuantity: quantity,
+      freeQuantity: 0,
     };
   }
 
