@@ -41,5 +41,9 @@ class PurchasedList {
 
     return finalAmount;
   }
+
+  clear() {
+    this.items = [];
+  }
 }
 export default PurchasedList;
