@@ -1,6 +1,7 @@
 import { ERROR_MESSAGE } from '../src/constants/ErrorMessage.js';
 import { Controller } from '../src/controller/Controller.js';
 import { Regex } from '../src/constants/MagicNumber.js';
+import InputService from '../src/service/InputService.js';
 
 describe('입력값 유효성 검사 테스트', () => {
   const controller = new Controller();
@@ -22,7 +23,9 @@ describe('입력값 유효성 검사 테스트', () => {
       const isValid = Regex.test(input);
       expect(isValid).toBe(true);
     } else {
-      await expect(() => controller.validate(input)).toThrowError(new Error(`${expectedError}`));
+      await expect(() => InputService.processInput(input)).toThrowError(
+        new Error(`${expectedError}`),
+      );
     }
   });
 });
