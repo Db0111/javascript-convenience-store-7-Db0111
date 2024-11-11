@@ -21,9 +21,9 @@ class Receipt {
 
     this.items.push({
       name,
-      quantity: Number(quantity + freeQuantity),
+      quantity: Number(quantity),
       price,
-      subtotal: price * Number(quantity + freeQuantity),
+      subtotal: price * Number(quantity),
     });
   }
 
