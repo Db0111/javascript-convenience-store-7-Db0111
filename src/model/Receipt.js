@@ -18,27 +18,26 @@ class Receipt {
   getProduct(name) {
     const productData = this.productModel.getStock()[name];
     if (Array.isArray(productData)) {
-      return productData[0]; // 배열일 경우 첫 번째 아이템
+      return productData[0];
     } else {
-      return productData; // 배열이 아니면 그대로 반환
+      return productData;
     }
   }
 
-  addItem(name, quantity) {
+  addItem(name, quantity, freeQuantity) {
     const product = this.getProduct(name);
     const price = product.price;
     this.items.push({
       name,
-      quantity: Number(quantity),
+      quantity: Number(quantity) + Number(freeQuantity),
       price,
-      subtotal: price * Number(quantity),
+      subtotal: price * (Number(quantity) + Number(freeQuantity)),
     });
   }
 
   addPromotionItem(name, quantity) {
     const product = this.getProduct(name);
     const price = product.price;
-
     this.promotionItems.push({
       name,
       quantity: Number(quantity),
@@ -108,6 +107,8 @@ class Receipt {
     }
     if (this.membershipDiscount > 0) {
       discounts += `멤버십할인\t\t\t-${this.membershipDiscount.toLocaleString()}\n`;
+    } else {
+      discounts += `멤버십할인\t\t\t-0\n`;
     }
     return discounts;
   }
