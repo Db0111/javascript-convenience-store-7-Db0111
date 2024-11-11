@@ -33,35 +33,16 @@ export class Controller {
   async handlePurchaseInput(input) {
     try {
       const parsedInput = InputService.processInput(input);
-
       for (const [productName, quantity] of Object.entries(parsedInput)) {
-        await processProductPurchase(
-          productName,
-          quantity,
-          this.productModel,
-          this.purchasedListModel,
-        );
+        await processProductPurchase(productName, quantity, this.productModel, this.purchasedListModel);
 
-        const freeQuantity = await handlePromotion(
-          productName,
-          quantity,
-          this.productModel,
-          this.promotionModel,
-          this.receipt,
-        );
+        const freeQuantity = await handlePromotion(productName, quantity, this.productModel, this.promotionModel, this.receipt);
         this.receipt.addItem(productName, quantity, freeQuantity);
         await this.productModel.updateStock(productName, quantity, freeQuantity);
       }
-
       const membershipAnswer = await InputView.getUserInput(IOMessage.membershipMessage);
       const validatedMembershipAnswer = InputValidator.validateYesNo(membershipAnswer);
-
-      handleMembership(
-        validatedMembershipAnswer,
-        this.purchasedListModel,
-        this.membershipModel,
-        this.receipt,
-      );
+      handleMembership(validatedMembershipAnswer, this.purchasedListModel, this.membershipModel, this.receipt);
     } catch (error) {
       OutputView.throwError(error);
     }
