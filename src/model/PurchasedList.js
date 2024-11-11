@@ -36,8 +36,7 @@ class PurchasedList {
   }
 
   getFinalAmount() {
-    const finalAmount =
-      this.getTotalAmount() - this.promotionDiscountAmount - this.membershipDiscountAmount;
+    const finalAmount = this.getTotalAmount() - this.promotionDiscountAmount - this.membershipDiscountAmount;
 
     return finalAmount;
   }
