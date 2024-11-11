@@ -6,7 +6,8 @@ class Membership {
     const discountableAmount = totalAmount - promotionDiscountAmount;
     const calculatedDiscount = discountableAmount * Membership.DISCOUNT_RATE;
 
-    return Math.min(calculatedDiscount, Membership.MAX_DISCOUNT);
+    const roundedDiscount = Math.floor(calculatedDiscount / 1000) * 1000;
+    return Math.min(roundedDiscount, Membership.MAX_DISCOUNT);
   }
 }
 
